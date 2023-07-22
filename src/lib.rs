@@ -3,6 +3,7 @@ mod audio;
 mod loading;
 mod menu;
 mod image;
+mod pipeline;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
@@ -15,8 +16,10 @@ use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::diagnostic::Diagnostics;
 use bevy::prelude::*;
 use bevy::render::extract_resource::ExtractResourcePlugin;
+use bevy::render::RenderApp;
 use bevy::window::PrimaryWindow;
 use crate::image::FallingSandImage;
+use crate::pipeline::FallingSandPipeline;
 
 // This example game uses States to separate logic
 // See https://bevy-cheatbook.github.io/programming/states.html
@@ -50,6 +53,9 @@ impl Plugin for GamePlugin {
                 .add_startup_system(setup)
                 .add_system(display_fps);
         }
+
+        let render_app = app.sub_app_mut(RenderApp);
+        render_app.init_resource::<FallingSandPipeline>();
     }
 }
 
