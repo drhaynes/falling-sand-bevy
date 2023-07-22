@@ -14,7 +14,9 @@ use bevy::app::App;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::diagnostic::Diagnostics;
 use bevy::prelude::*;
+use bevy::render::extract_resource::ExtractResourcePlugin;
 use bevy::window::PrimaryWindow;
+use crate::image::FallingSandImage;
 
 // This example game uses States to separate logic
 // See https://bevy-cheatbook.github.io/programming/states.html
@@ -44,6 +46,7 @@ impl Plugin for GamePlugin {
         {
             app.add_plugin(FrameTimeDiagnosticsPlugin::default())
                 .add_plugin(LogDiagnosticsPlugin::default())
+                .add_plugin(ExtractResourcePlugin::<FallingSandImage>::default())
                 .add_startup_system(setup)
                 .add_system(display_fps);
         }
