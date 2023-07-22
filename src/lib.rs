@@ -2,6 +2,7 @@ mod actions;
 mod audio;
 mod loading;
 mod menu;
+mod image;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
@@ -43,9 +44,29 @@ impl Plugin for GamePlugin {
         {
             app.add_plugin(FrameTimeDiagnosticsPlugin::default())
                 .add_plugin(LogDiagnosticsPlugin::default())
+                .add_startup_system(setup)
                 .add_system(display_fps);
         }
     }
+}
+
+fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
+    let canvas_width = 640;
+    let canvas_height = 480;
+    let image = image::create_image(canvas_width, canvas_height);
+    let image = images.add(image);
+
+    commands.spawn(SpriteBundle {
+        sprite: Sprite {
+            custom_size: Some(Vec2::new(canvas_width as f32, canvas_height as f32)),
+            ..default()
+        },
+        texture: image.clone(),
+        ..default()
+    });
+
+    commands.spawn(Camera2dBundle::default());
+    commands.insert_resource(image::FallingSandImage(image));
 }
 
 fn display_fps(diagnostics: Res<Diagnostics>, mut windows: Query<&mut Window, With<PrimaryWindow>>) {
