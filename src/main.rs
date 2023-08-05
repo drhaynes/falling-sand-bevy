@@ -1,18 +1,20 @@
 // disable console on windows for release builds
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::io::Cursor;
+
+use winit::window::Icon;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy::winit::WinitWindows;
 use bevy::DefaultPlugins;
-use falling_sand_game::GamePlugin; // ToDo: Replace falling_sand_game with your new crate name.
-use std::io::Cursor;
-use winit::window::Icon;
+
+use falling_sand_game::GamePlugin;
+use falling_sand_game::cellular_automata_image;
 
 fn main() {
     App::new()
         .insert_resource(Msaa::Off)
-        .insert_resource(ClearColor(Color::rgb(0.4, 0.4, 0.4)))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Falling Sand Game".to_string(),
@@ -23,9 +25,28 @@ fn main() {
             }),
             ..default()
         }))
+        .add_startup_system(setup)
         .add_plugin(GamePlugin)
         .add_system(set_window_icon.on_startup())
         .run();
+}
+
+fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
+    let width: u32 = 800;
+    let height: u32 = 600;
+    let image = cellular_automata_image::create_image(width, height);
+    let image = images.add(image);
+
+    commands.spawn(SpriteBundle {
+        sprite: Sprite {
+            custom_size: Some(Vec2::new(width as f32, height as f32)),
+            ..default()
+        },
+        texture: image.clone(),
+        ..default()
+    });
+
+    commands.insert_resource(cellular_automata_image::CellularAutomataImage(image))
 }
 
 // Sets the icon on windows and X11

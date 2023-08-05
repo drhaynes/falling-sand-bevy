@@ -2,6 +2,7 @@ mod actions;
 mod audio;
 mod loading;
 mod menu;
+pub mod cellular_automata_image;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
