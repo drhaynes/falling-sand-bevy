@@ -8,9 +8,11 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy::winit::WinitWindows;
 use bevy::DefaultPlugins;
+use bevy::render::extract_resource::ExtractResourcePlugin;
 
 use falling_sand_game::GamePlugin;
 use falling_sand_game::cellular_automata_image;
+use falling_sand_game::cellular_automata_image::CellularAutomataImage;
 
 fn main() {
     App::new()
@@ -28,6 +30,7 @@ fn main() {
         .add_startup_system(setup)
         .add_plugin(GamePlugin)
         .add_system(set_window_icon.on_startup())
+        .add_plugin(ExtractResourcePlugin::<CellularAutomataImage>::default())
         .run();
 }
 
