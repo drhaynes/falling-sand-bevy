@@ -8,11 +8,8 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy::winit::WinitWindows;
 use bevy::DefaultPlugins;
-use bevy::render::extract_resource::ExtractResourcePlugin;
 
 use falling_sand_game::GamePlugin;
-use falling_sand_game::cellular_automata_image;
-use falling_sand_game::cellular_automata_image::CellularAutomataImage;
 
 fn main() {
     App::new()
@@ -27,29 +24,9 @@ fn main() {
             }),
             ..default()
         }))
-        .add_startup_system(setup)
         .add_plugin(GamePlugin)
         .add_system(set_window_icon.on_startup())
-        .add_plugin(ExtractResourcePlugin::<CellularAutomataImage>::default())
         .run();
-}
-
-fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
-    let width: u32 = 800;
-    let height: u32 = 600;
-    let image = cellular_automata_image::create_image(width, height);
-    let image = images.add(image);
-
-    commands.spawn(SpriteBundle {
-        sprite: Sprite {
-            custom_size: Some(Vec2::new(width as f32, height as f32)),
-            ..default()
-        },
-        texture: image.clone(),
-        ..default()
-    });
-
-    commands.insert_resource(cellular_automata_image::CellularAutomataImage(image))
 }
 
 // Sets the icon on windows and X11
