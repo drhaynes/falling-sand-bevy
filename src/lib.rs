@@ -11,7 +11,8 @@ use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::diagnostic::Diagnostics;
 use bevy::prelude::*;
 use bevy::render::extract_resource::ExtractResourcePlugin;
-use bevy::render::RenderApp;
+use bevy::render::{RenderApp, RenderSet};
+use bevy::render::render_graph::RenderGraph;
 use bevy::window::PrimaryWindow;
 
 use crate::actions::ActionsPlugin;
@@ -19,7 +20,7 @@ use crate::audio::InternalAudioPlugin;
 use crate::loading::LoadingPlugin;
 use crate::menu::MenuPlugin;
 use crate::cellular_automata_image::CellularAutomataImage;
-use crate::pipeline::CellularAutomataPipeline;
+use crate::pipeline::{CellularAutomataNode, CellularAutomataPipeline};
 
 // This example game uses States to separate logic
 // See https://bevy-cheatbook.github.io/programming/states.html
@@ -34,6 +35,9 @@ enum GameState {
     // Here the menu is drawn and waiting for player interaction
     Menu,
 }
+
+const SIMULATION_SIZE: (u32, u32) = (1280, 720);
+const WORKGROUP_SIZE: u32 = 8;
 
 pub struct GamePlugin;
 
@@ -55,13 +59,22 @@ impl Plugin for GamePlugin {
         }
 
         let render_app = app.sub_app_mut(RenderApp);
-        render_app.init_resource::<CellularAutomataPipeline>();
+        render_app
+            .init_resource::<CellularAutomataPipeline>()
+            .add_system(pipeline::queue_bind_group.in_set(RenderSet::Queue));
+
+        let mut render_graph = render_app.world.resource_mut::<RenderGraph>();
+        render_graph.add_node("cellular_automata", CellularAutomataNode::default());
+        render_graph.add_node_edge(
+            "cellular_automata",
+            bevy::render::main_graph::node::CAMERA_DRIVER,
+        );
     }
 }
 
 fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
-    let width: u32 = 800;
-    let height: u32 = 600;
+    let width: u32 = SIMULATION_SIZE.0;
+    let height: u32 = SIMULATION_SIZE.1;
     let image = cellular_automata_image::create_image(width, height);
     let image = images.add(image);
 

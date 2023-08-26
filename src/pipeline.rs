@@ -1,8 +1,13 @@
 use std::borrow::Cow;
 use bevy::asset::AssetServer;
-use bevy::prelude::{FromWorld, Resource, World};
+use bevy::prelude::{Commands, FromWorld, Image, Res, Resource, World};
+use bevy::render::render_asset::RenderAssets;
+use bevy::render::render_graph;
+use bevy::render::render_graph::{NodeRunError, RenderGraphContext, SlotInfo};
 use bevy::render::render_resource::*;
-use bevy::render::renderer::RenderDevice;
+use bevy::render::renderer::{RenderContext, RenderDevice};
+use crate::cellular_automata_image::CellularAutomataImage;
+use crate::{SIMULATION_SIZE, WORKGROUP_SIZE};
 
 #[derive(Resource)]
 pub struct CellularAutomataPipeline {
@@ -60,5 +65,103 @@ impl FromWorld for CellularAutomataPipeline {
             init_pipeline,
             update_pipeline,
         }
+    }
+}
+
+#[derive(Resource)]
+struct CellularAutomataImageBindGroup(pub BindGroup);
+
+pub fn queue_bind_group(
+    mut commands: Commands,
+    render_device: Res<RenderDevice>,
+    pipeline: Res<CellularAutomataPipeline>,
+    gpu_images: Res<RenderAssets<Image>>,
+    cellular_automata_image: Res<CellularAutomataImage>,
+) {
+    let view = &gpu_images[&cellular_automata_image.0];
+    let bind_group = render_device.create_bind_group(&BindGroupDescriptor {
+        label: Some("Cellular Automata Bind Group"),
+        layout: &pipeline.texture_bind_group_layout,
+        entries: &[BindGroupEntry{
+            binding: 0,
+            resource: BindingResource::TextureView(&view.texture_view),
+        }],
+    });
+    commands.insert_resource(CellularAutomataImageBindGroup(bind_group))
+}
+
+pub enum CellularAutomataState {
+    Loading,
+    Init,
+    Update,
+}
+
+pub struct CellularAutomataNode {
+    state: CellularAutomataState,
+}
+
+impl Default for CellularAutomataNode {
+    fn default() -> Self {
+        Self {
+            state: CellularAutomataState::Loading,
+        }
+    }
+}
+
+impl render_graph::Node for CellularAutomataNode {
+    fn update(&mut self, world: &mut World) {
+        let pipeline = world.resource::<CellularAutomataPipeline>();
+        let pipeline_cache = world.resource::<PipelineCache>();
+
+        match self.state {
+            CellularAutomataState::Loading => {
+                if let CachedPipelineState::Ok(_) =
+                    pipeline_cache.get_compute_pipeline_state(pipeline.init_pipeline) {
+                    self.state = CellularAutomataState::Init;
+                }
+            }
+            CellularAutomataState::Init => {
+                if let CachedPipelineState::Ok(_) =
+                    pipeline_cache.get_compute_pipeline_state(pipeline.update_pipeline) {
+                    self.state = CellularAutomataState::Update;
+                }
+            }
+            CellularAutomataState::Update => {}
+        }
+    }
+
+    fn run(
+        &self,
+        graph: &mut RenderGraphContext,
+        render_context: &mut RenderContext,
+        world: &World
+    ) -> Result<(), NodeRunError> {
+        let texture_bind_group = &world.resource::<CellularAutomataImageBindGroup>().0;
+        let pipeline_cache = world.resource::<PipelineCache>();
+        let pipeline = world.resource::<CellularAutomataPipeline>();
+
+        let mut pass = render_context
+            .command_encoder()
+            .begin_compute_pass(&ComputePassDescriptor::default());
+
+        pass.set_bind_group(0, texture_bind_group, &[]);
+
+        match self.state {
+            CellularAutomataState::Loading | CellularAutomataState::Update => {}
+            CellularAutomataState::Init => {
+                let init_pipeline = pipeline_cache
+                    .get_compute_pipeline(pipeline.init_pipeline)
+                    .unwrap();
+                pass.set_pipeline(init_pipeline);
+                pass.dispatch_workgroups(
+                    SIMULATION_SIZE.0 / WORKGROUP_SIZE,
+                    SIMULATION_SIZE.1 / WORKGROUP_SIZE,
+                    1,
+                );
+            }
+
+        }
+
+        Ok(())
     }
 }
