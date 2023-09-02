@@ -1,3 +1,7 @@
+const AIR_COLOUR = vec4<f32>(0.02, 0.02, 0.02, 1.0);
+const SAND_COLOUR = vec4<f32>(0.8, 0.8, 0.2, 1.0);
+const EPSILON = 0.001;
+
 @group(0) @binding(0)
 var texture: texture_storage_2d<rgba8unorm, read_write>;
 
@@ -18,20 +22,28 @@ fn randomFloat(value: u32) -> f32 {
 
 @compute @workgroup_size(8, 8, 1)
 fn init(@builtin(global_invocation_id) invocation_id: vec3<u32>, @builtin(num_workgroups) num_workgroups: vec3<u32>) {
-    let air_colour = vec4<f32>(0.02, 0.02, 0.02, 1.0);
-    let sand_colour = vec4<f32>(0.8, 0.8, 0.2, 1.0);
-
     let location = vec2<i32>(invocation_id.xy);
-    var colour = air_colour;
+    var colour = AIR_COLOUR;
     let random_number = randomFloat(invocation_id.y * num_workgroups.x + invocation_id.x);
     let is_sand = random_number > 0.99;
 
     if(is_sand) {
-        colour = sand_colour;
+        colour = SAND_COLOUR;
     }
 
     textureStore(texture, location, colour);
 }
 
 @compute @workgroup_size(8, 8, 1)
-fn update(@builtin(global_invocation_id) invocation_id: vec3<u32>) {}
+fn update(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
+    let location = vec2<i32>(invocation_id.xy);
+    let current_particle_colour = textureLoad(texture, location);
+    if (distance(current_particle_colour, AIR_COLOUR) < EPSILON) {
+        // do nothing
+    } else if (distance(current_particle_colour, SAND_COLOUR) < EPSILON) {
+        // check below and fall if we can
+        // if not, select a random direction diagonally down, and try to fall there
+        textureStore(texture, location, AIR_COLOUR);
+        textureStore(texture, location + vec2<i32>(0, 1), SAND_COLOUR);
+    }
+}

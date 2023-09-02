@@ -147,7 +147,7 @@ impl render_graph::Node for CellularAutomataNode {
         pass.set_bind_group(0, texture_bind_group, &[]);
 
         match self.state {
-            CellularAutomataState::Loading | CellularAutomataState::Update => {}
+            CellularAutomataState::Loading => {}
             CellularAutomataState::Init => {
                 let init_pipeline = pipeline_cache
                     .get_compute_pipeline(pipeline.init_pipeline)
@@ -159,7 +159,17 @@ impl render_graph::Node for CellularAutomataNode {
                     1,
                 );
             }
-
+            CellularAutomataState::Update => {
+                let update_pipeline = pipeline_cache
+                    .get_compute_pipeline(pipeline.update_pipeline)
+                    .unwrap();
+                pass.set_pipeline(update_pipeline);
+                pass.dispatch_workgroups(
+                    SIMULATION_SIZE.0 / WORKGROUP_SIZE,
+                    SIMULATION_SIZE.1 / WORKGROUP_SIZE,
+                    1,
+                );
+            }
         }
 
         Ok(())
