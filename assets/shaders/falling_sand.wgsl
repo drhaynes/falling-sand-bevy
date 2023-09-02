@@ -1,5 +1,6 @@
 const AIR_COLOUR = vec4<f32>(0.02, 0.02, 0.02, 1.0);
 const SAND_COLOUR = vec4<f32>(0.8, 0.8, 0.2, 1.0);
+const STONE_COLOUR = vec4<f32>(0.4, 0.4, 0.4, 1.0);
 const EPSILON = 0.001;
 
 @group(0) @binding(0)
@@ -24,11 +25,18 @@ fn randomFloat(value: u32) -> f32 {
 fn init(@builtin(global_invocation_id) invocation_id: vec3<u32>, @builtin(num_workgroups) num_workgroups: vec3<u32>) {
     let location = vec2<i32>(invocation_id.xy);
     var colour = AIR_COLOUR;
+
+    // Add sand sprinled around randomly
     let random_number = randomFloat(invocation_id.y * num_workgroups.x + invocation_id.x);
-    let is_sand = random_number > 0.99;
+    let is_sand = random_number > 0.9;
 
     if(is_sand) {
         colour = SAND_COLOUR;
+    }
+
+    // Add a stone barrier at the bottom of the screen
+    if(location.y > 640) {
+        colour = STONE_COLOUR;
     }
 
     textureStore(texture, location, colour);
@@ -42,8 +50,15 @@ fn update(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
         // do nothing
     } else if (distance(current_particle_colour, SAND_COLOUR) < EPSILON) {
         // check below and fall if we can
-        // if not, select a random direction diagonally down, and try to fall there
-        textureStore(texture, location, AIR_COLOUR);
-        textureStore(texture, location + vec2<i32>(0, 1), SAND_COLOUR);
+        let colour_below = textureLoad(texture, location + vec2<i32>(0, 1));
+        if(distance(colour_below, AIR_COLOUR) < EPSILON) {
+            // fall straight down
+            textureStore(texture, location, AIR_COLOUR);
+            textureStore(texture, location + vec2<i32>(0, 1), SAND_COLOUR);
+        } else {
+            // there is something below
+            // select a random direction diagonally down
+            // and try to fall there
+        }
     }
 }
