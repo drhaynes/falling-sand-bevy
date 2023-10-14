@@ -4,6 +4,7 @@ mod loading;
 mod menu;
 pub mod cellular_automata_image;
 mod pipeline;
+mod camera;
 
 use bevy::app::App;
 #[cfg(debug_assertions)]
@@ -20,7 +21,7 @@ use crate::audio::InternalAudioPlugin;
 use crate::loading::LoadingPlugin;
 use crate::menu::MenuPlugin;
 use crate::cellular_automata_image::CellularAutomataImage;
-use crate::pipeline::{CellularAutomataNode, CellularAutomataPipeline};
+use crate::pipeline::PipelinesPlugin;
 
 // This example game uses States to separate logic
 // See https://bevy-cheatbook.github.io/programming/states.html
@@ -49,7 +50,9 @@ impl Plugin for GamePlugin {
             .add_plugin(MenuPlugin)
             .add_plugin(ActionsPlugin)
             .add_plugin(InternalAudioPlugin)
-            .add_plugin(ExtractResourcePlugin::<CellularAutomataImage>::default());
+            .add_plugin(ExtractResourcePlugin::<CellularAutomataImage>::default())
+            .add_plugin(camera::CameraPlugin)
+            .add_plugin(PipelinesPlugin);
 
         #[cfg(debug_assertions)]
         {
@@ -57,18 +60,6 @@ impl Plugin for GamePlugin {
                 .add_plugin(LogDiagnosticsPlugin::default())
                 .add_system(display_fps);
         }
-
-        let render_app = app.sub_app_mut(RenderApp);
-        render_app
-            .init_resource::<CellularAutomataPipeline>()
-            .add_system(pipeline::queue_bind_group.in_set(RenderSet::Queue));
-
-        let mut render_graph = render_app.world.resource_mut::<RenderGraph>();
-        render_graph.add_node("cellular_automata", CellularAutomataNode::default());
-        render_graph.add_node_edge(
-            "cellular_automata",
-            bevy::render::main_graph::node::CAMERA_DRIVER,
-        );
     }
 }
 
