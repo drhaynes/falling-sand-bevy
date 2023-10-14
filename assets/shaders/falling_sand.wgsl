@@ -26,9 +26,9 @@ fn init(@builtin(global_invocation_id) invocation_id: vec3<u32>, @builtin(num_wo
     let location = vec2<i32>(invocation_id.xy);
     var colour = AIR_COLOUR;
 
-    // Add sand sprinled around randomly
+    // Add sand sprinkled around randomly
     let random_number = randomFloat(invocation_id.y * num_workgroups.x + invocation_id.x);
-    let is_sand = random_number > 0.9;
+    let is_sand = random_number > 0.7;
 
     if(is_sand) {
         colour = SAND_COLOUR;
@@ -46,6 +46,7 @@ fn init(@builtin(global_invocation_id) invocation_id: vec3<u32>, @builtin(num_wo
 fn update(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
     let location = vec2<i32>(invocation_id.xy);
     let current_particle_colour = textureLoad(texture, location);
+
     if (distance(current_particle_colour, AIR_COLOUR) < EPSILON) {
         // do nothing
     } else if (distance(current_particle_colour, SAND_COLOUR) < EPSILON) {
@@ -56,9 +57,19 @@ fn update(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
             textureStore(texture, location, AIR_COLOUR);
             textureStore(texture, location + vec2<i32>(0, 1), SAND_COLOUR);
         } else {
-            // there is something below
+            // there is something directly below
             // select a random direction diagonally down
             // and try to fall there
+            let rand = randomFloat(invocation_id.x + invocation_id.y);
+            var new_x = -1;
+            if(rand > 0.5) {
+                new_x = 1;
+            }
+            let colour_below_diagonally = textureLoad(texture, location + vec2<i32>(new_x, 1));
+            if(distance(colour_below_diagonally, AIR_COLOUR) < EPSILON) {
+                textureStore(texture, location, AIR_COLOUR);
+                textureStore(texture, location + vec2<i32>(new_x, 1), SAND_COLOUR);
+            }
         }
     }
 }
