@@ -5,6 +5,7 @@ mod menu;
 pub mod cellular_automata_image;
 mod pipeline;
 mod camera;
+mod input;
 
 use bevy::app::App;
 #[cfg(debug_assertions)]
@@ -21,6 +22,7 @@ use crate::audio::InternalAudioPlugin;
 use crate::loading::LoadingPlugin;
 use crate::menu::MenuPlugin;
 use crate::cellular_automata_image::CellularAutomataImage;
+use crate::input::DrawingParams;
 use crate::pipeline::PipelinesPlugin;
 
 // This example game uses States to separate logic
@@ -42,6 +44,9 @@ const WORKGROUP_SIZE: u32 = 8;
 
 pub struct GamePlugin;
 
+#[derive(Component)]
+pub struct MainCamera;
+
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_state::<GameState>()
@@ -51,8 +56,10 @@ impl Plugin for GamePlugin {
             .add_plugin(ActionsPlugin)
             .add_plugin(InternalAudioPlugin)
             .add_plugin(ExtractResourcePlugin::<CellularAutomataImage>::default())
+            .add_plugin(ExtractResourcePlugin::<DrawingParams>::default())
             .add_plugin(camera::CameraPlugin)
-            .add_plugin(PipelinesPlugin);
+            .add_plugin(PipelinesPlugin)
+            .add_plugin(input::InputPlugin);
 
         #[cfg(debug_assertions)]
         {
