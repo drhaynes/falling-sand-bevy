@@ -10,7 +10,8 @@ use winit::event::Event;
 pub struct InputPlugin;
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<DrawingParams>();
+        app.init_resource::<DrawingParams>()
+            .add_system(update_input_state);
     }
 }
 
@@ -41,7 +42,7 @@ pub fn update_input_state(
         .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
     {
         input_state.previous_canvas_position = input_state.canvas_position;
-        input_state.canvas_position = world_position_to_canvas_position(world_position);
+        input_state.canvas_position = world_position_to_canvas_position(world_position * Vec2::new(1.0, -1.0));
     }
 }
 

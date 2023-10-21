@@ -85,6 +85,7 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
         ..default()
     });
 
+    commands.spawn((Camera2dBundle::default(), MainCamera));
     commands.insert_resource(cellular_automata_image::CellularAutomataImage(image))
 }
 

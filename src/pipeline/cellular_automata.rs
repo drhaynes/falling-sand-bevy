@@ -79,7 +79,7 @@ impl FromWorld for CellularAutomataPipeline {
 }
 
 #[derive(Resource)]
-struct CellularAutomataImageBindGroup(pub BindGroup);
+pub(crate) struct CellularAutomataImageBindGroup(pub BindGroup);
 
 pub fn queue_bind_group(
     mut commands: Commands,

@@ -1,5 +1,5 @@
 const AIR_COLOUR = vec4<f32>(0.02, 0.02, 0.02, 1.0);
-const SAND_COLOUR = vec4<f32>(0.8, 0.8, 0.2, 1.0);
+const SAND_COLOUR = vec4<f32>(0.8, 0.8, 0.0, 1.0);
 const STONE_COLOUR = vec4<f32>(0.4, 0.4, 0.4, 1.0);
 const EPSILON = 0.001;
 
@@ -26,13 +26,13 @@ fn init(@builtin(global_invocation_id) invocation_id: vec3<u32>, @builtin(num_wo
     let location = vec2<i32>(invocation_id.xy);
     var colour = AIR_COLOUR;
 
-    // Add sand sprinkled around randomly
-    let random_number = randomFloat(invocation_id.y * num_workgroups.x + invocation_id.x);
-    let is_sand = random_number > 0.7;
-
-    if(is_sand) {
-        colour = SAND_COLOUR;
-    }
+//    // Add sand sprinkled around randomly
+//    let random_number = randomFloat(invocation_id.y * num_workgroups.x + invocation_id.x);
+//    let is_sand = random_number > 0.7;
+//
+//    if(is_sand) {
+//        colour = SAND_COLOUR;
+//    }
 
     // Add a stone barrier at the bottom of the screen
     if(location.y > 640) {
