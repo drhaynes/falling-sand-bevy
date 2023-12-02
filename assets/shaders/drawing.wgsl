@@ -8,13 +8,15 @@ struct PushConstants {
 var<push_constant> drawing_constants: PushConstants;
 
 @group(0) @binding(0)
+var<uniform> simulation_size: vec2<u32>;
+@group(0) @binding(1)
 var texture: texture_storage_2d<rgba8unorm, read_write>;
 
 @compute @workgroup_size(8, 8, 1)
 fn draw(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
     let pixel = vec2<u32>(invocation_id.xy);
-    let size = vec2<u32>(textureDimensions(texture));
-    if (pixel.x >= size.x && pixel.y >= size.y) {
+
+    if (pixel.x >= simulation_size.x && pixel.y >= simulation_size.y) {
         return;
     }
 

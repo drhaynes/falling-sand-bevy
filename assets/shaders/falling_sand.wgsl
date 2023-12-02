@@ -4,6 +4,8 @@ const STONE_COLOUR = vec4<f32>(0.4, 0.4, 0.4, 1.0);
 const EPSILON = 0.001;
 
 @group(0) @binding(0)
+var<uniform> simulation_size: vec2<u32>;
+@group(0) @binding(1)
 var texture: texture_storage_2d<rgba8unorm, read_write>;
 
 fn hash(value: u32) -> u32 {
