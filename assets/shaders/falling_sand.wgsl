@@ -1,9 +1,11 @@
 const AIR_COLOUR = vec4<f32>(0.02, 0.02, 0.02, 1.0);
-const SAND_COLOUR = vec4<f32>(0.8, 0.8, 0.0, 1.0);
+const SAND_COLOUR = vec4<f32>(0.7, 0.58, 0.44, 1.0);
 const STONE_COLOUR = vec4<f32>(0.4, 0.4, 0.4, 1.0);
-const EPSILON = 0.001;
+const EPSILON = 0.01;
 
 @group(0) @binding(0)
+var<uniform> size: vec2<u32>;
+@group(0) @binding(1)
 var texture: texture_storage_2d<rgba8unorm, read_write>;
 
 fn hash(value: u32) -> u32 {

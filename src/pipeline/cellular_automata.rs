@@ -8,7 +8,7 @@ use bevy::render::render_graph::{NodeRunError, RenderGraphContext, SlotInfo};
 use bevy::render::render_resource::*;
 use bevy::render::renderer::{RenderContext, RenderDevice};
 use crate::cellular_automata_image::CellularAutomataImage;
-use crate::{SIMULATION_SIZE, WORKGROUP_SIZE};
+use crate::{CellularAutomataBuffers, SIMULATION_SIZE, WORKGROUP_SIZE};
 
 pub struct CellularAutomataPipelinePlugin;
 impl Plugin for CellularAutomataPipelinePlugin {
@@ -23,24 +23,36 @@ impl Plugin for CellularAutomataPipelinePlugin {
 pub struct CellularAutomataPipeline {
     init_pipeline: CachedComputePipelineId,
     update_pipeline: CachedComputePipelineId,
-    texture_bind_group_layout: BindGroupLayout,
+    bind_group_layout: BindGroupLayout,
 }
 
 impl FromWorld for CellularAutomataPipeline {
     fn from_world(world: &mut World) -> Self {
-        let texture_bind_group_layout = world.resource::<RenderDevice>()
+        let bind_group_layout = world.resource::<RenderDevice>()
             .create_bind_group_layout(&BindGroupLayoutDescriptor{
                 label: Some("Cellular automata bind group layout"),
-                entries: &[BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: ShaderStages::COMPUTE,
-                    ty: BindingType::StorageTexture {
-                        access: StorageTextureAccess::ReadWrite,
-                        format: TextureFormat::Rgba8Unorm,
-                        view_dimension: TextureViewDimension::D2,
+                entries: &[
+                    BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: ShaderStages::COMPUTE,
+                        ty: BindingType::Buffer {
+                            ty: BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: BufferSize::new((2 * std::mem::size_of::<u32>()) as _,),
+                        },
+                        count: None,
                     },
-                    count: None,
-                }],
+                    BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: ShaderStages::COMPUTE,
+                        ty: BindingType::StorageTexture {
+                            access: StorageTextureAccess::ReadWrite,
+                            format: TextureFormat::Rgba8Unorm,
+                            view_dimension: TextureViewDimension::D2,
+                        },
+                        count: None,
+                    }
+                ],
             });
 
         let pipeline_cache = world.resource::<PipelineCache>();
@@ -51,7 +63,7 @@ impl FromWorld for CellularAutomataPipeline {
         let init_pipeline = pipeline_cache.queue_compute_pipeline(
             ComputePipelineDescriptor {
                 label: Some(Cow::from("Falling sand init pipeline")),
-                layout: vec![texture_bind_group_layout.clone()],
+                layout: vec![bind_group_layout.clone()],
                 push_constant_ranges: vec![],
                 shader: shader.clone(),
                 shader_defs: vec![],
@@ -62,7 +74,7 @@ impl FromWorld for CellularAutomataPipeline {
         let update_pipeline= pipeline_cache.queue_compute_pipeline(
             ComputePipelineDescriptor {
                 label: Some(Cow::from("Falling sand update pipeline")),
-                layout: vec![texture_bind_group_layout.clone()],
+                layout: vec![bind_group_layout.clone()],
                 push_constant_ranges: vec![],
                 shader,
                 shader_defs: vec![],
@@ -71,7 +83,7 @@ impl FromWorld for CellularAutomataPipeline {
         );
 
         CellularAutomataPipeline {
-            texture_bind_group_layout,
+            bind_group_layout,
             init_pipeline,
             update_pipeline,
         }
@@ -87,14 +99,20 @@ pub fn queue_bind_group(
     pipeline: Res<CellularAutomataPipeline>,
     gpu_images: Res<RenderAssets<Image>>,
     cellular_automata_image: Res<CellularAutomataImage>,
+    buffers: Res<CellularAutomataBuffers>,
 ) {
     let view = &gpu_images[&cellular_automata_image.0];
     let bind_group = render_device.create_bind_group(&BindGroupDescriptor {
         label: Some("Cellular Automata Bind Group"),
-        layout: &pipeline.texture_bind_group_layout,
-        entries: &[BindGroupEntry{
-            binding: 0,
-            resource: BindingResource::TextureView(&view.texture_view),
+        layout: &pipeline.bind_group_layout,
+        entries: &[
+            BindGroupEntry {
+                binding: 0,
+                resource: buffers.size_buffer.as_entire_binding(),
+            },
+            BindGroupEntry {
+                binding: 1,
+                resource: BindingResource::TextureView(&view.texture_view),
         }],
     });
     commands.insert_resource(CellularAutomataImageBindGroup(bind_group))
