@@ -14,16 +14,19 @@ use falling_sand_game::GamePlugin;
 fn main() {
     App::new()
         .insert_resource(Msaa::Off)
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "Falling Sand Game".to_string(),
-                resolution: (800., 600.).into(),
-                canvas: Some("#bevy".to_owned()),
-                present_mode: bevy::window::PresentMode::AutoNoVsync,
+        .add_plugins(DefaultPlugins
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "Falling Sand Game".to_string(),
+                    resolution: (800., 600.).into(),
+                    canvas: Some("#bevy".to_owned()),
+                    present_mode: bevy::window::PresentMode::AutoNoVsync,
+                    ..default()
+                }),
                 ..default()
-            }),
-            ..default()
-        }))
+            })
+            .set(ImagePlugin::default_nearest())
+        )
         .add_plugin(GamePlugin)
         .add_system(set_window_icon.on_startup())
         .run();
