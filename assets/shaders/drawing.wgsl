@@ -1,10 +1,5 @@
-const SAND_COLOUR = vec4<f32>(0.7, 0.58, 0.44, 1.0);
+#import "shaders/core.wgsl"
 
-struct PushConstants {
-    drawing_start: vec2<f32>,
-    drawing_end: vec2<f32>,
-    brush_radius: f32,
-}
 var<push_constant> drawing_constants: PushConstants;
 @group(0) @binding(0)
 var<uniform> simulation_size: vec2<u32>;
