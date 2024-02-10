@@ -4,7 +4,7 @@ var<push_constant> drawing_constants: PushConstants;
 @group(0) @binding(0)
 var<uniform> simulation_size: vec2<u32>;
 @group(0) @binding(1)
-var texture: texture_storage_2d<rgba8unorm, read_write>;
+var<storage, read_write> simulation_source: array<Cell>;
 
 @compute @workgroup_size(8, 8, 1)
 fn draw(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
@@ -30,7 +30,7 @@ fn draw_circle(current_pixel: vec2<f32>, centre: vec2<f32>, radius: f32) {
     if (current_pixel.x >= x_min && current_pixel.x <= x_max && current_pixel.y >= y_min && current_pixel.y <= y_max) {
         let distance = length(current_pixel - centre);
         if (round(distance) <= radius) {
-            textureStore(texture, vec2<i32>(current_pixel), SAND_COLOUR);
+            simulation_source[index_of(vec2<i32>(current_pixel), simulation_size.x)] = Cell(SAND);
         }
     }
 }

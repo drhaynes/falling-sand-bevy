@@ -10,7 +10,7 @@ use bevy::render::{render_graph, RenderSet};
 use bevy::render::render_graph::{NodeRunError, RenderGraphContext};
 use crate::cellular_automata_image::CellularAutomataImage;
 use crate::input::DrawingParams;
-use crate::{CellularAutomataBuffers, SIMULATION_SIZE, WORKGROUP_SIZE};
+use crate::{CellularAutomataBuffers, NUMBER_OF_CELLS, SIMULATION_SIZE, WORKGROUP_SIZE};
 use super::cellular_automata::CellularAutomataImageBindGroup;
 
 pub struct DrawingPipelinePlugin;
@@ -68,13 +68,13 @@ impl FromWorld for DrawingPipeline {
                     BindGroupLayoutEntry {
                         binding: 1,
                         visibility: ShaderStages::COMPUTE,
-                        ty: BindingType::StorageTexture {
-                            access: StorageTextureAccess::ReadWrite,
-                            format: TextureFormat::Rgba8Unorm,
-                            view_dimension: TextureViewDimension::D2,
+                        ty: BindingType::Buffer {
+                            ty: BufferBindingType::Storage { read_only: false },
+                            has_dynamic_offset: false,
+                            min_binding_size: BufferSize::new((NUMBER_OF_CELLS * std::mem::size_of::<u32>()) as _,),
                         },
                         count: None,
-                    }
+                    },
                 ],
             });
         
@@ -106,11 +106,9 @@ pub fn queue_drawing_bind_group(
     mut commands: Commands,
     render_device: Res<RenderDevice>,
     pipeline: Res<DrawingPipeline>,
-    gpu_images: Res<RenderAssets<Image>>,
-    cellular_automata_image: Res<CellularAutomataImage>,
     buffers: Res<CellularAutomataBuffers>,
+    parameters: Res<DrawingParams>,
 ) {
-    let view = &gpu_images[&cellular_automata_image.0];
     let drawing_bind_group = render_device.create_bind_group(&BindGroupDescriptor {
         label: Some("Drawing bind group"),
         layout: &pipeline.drawing_bind_group_layout,
@@ -121,8 +119,8 @@ pub fn queue_drawing_bind_group(
             },
             BindGroupEntry {
                 binding: 1,
-                resource: BindingResource::TextureView(&view.texture_view),
-            }
+                resource: buffers.simulation_buffers[*parameters.frame_number.lock() % 2].as_entire_binding(),
+            },
         ],
     });
     commands.insert_resource(DrawingBindGroup(drawing_bind_group))

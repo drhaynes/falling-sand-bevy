@@ -43,6 +43,7 @@ enum GameState {
 }
 
 const SIMULATION_SIZE: (u32, u32) = (1280, 720);
+const NUMBER_OF_CELLS: usize = (SIMULATION_SIZE.0 * SIMULATION_SIZE.1) as usize;
 const WORKGROUP_SIZE: u32 = 8;
 
 pub struct GamePlugin;
@@ -53,6 +54,7 @@ pub struct MainCamera;
 #[derive(Resource, Clone, ExtractResource)]
 pub struct CellularAutomataBuffers {
     pub size_buffer: Buffer,
+    pub simulation_buffers: Vec<Buffer>,
 }
 
 impl Plugin for GamePlugin {
@@ -90,6 +92,8 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>, device: Res<
         &[width, height],
         Some("Simulation size uniform buffer"));
 
+    let simulation_buffers = create_simulation_buffers(device);
+
     commands.spawn(SpriteBundle {
         sprite: Sprite {
             custom_size: Some(Vec2::new(width as f32, height as f32)),
@@ -101,7 +105,15 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>, device: Res<
 
     commands.spawn((Camera2dBundle::default(), MainCamera));
     commands.insert_resource(CellularAutomataImage(image));
-    commands.insert_resource(CellularAutomataBuffers { size_buffer });
+    commands.insert_resource(CellularAutomataBuffers { size_buffer, simulation_buffers });
+}
+
+fn create_simulation_buffers(device: Res<RenderDevice>) -> Vec<Buffer> {
+    let simulation_buffer_data = vec![0u32; NUMBER_OF_CELLS];
+    (0..2).map(|i| {
+        buffer::create_storage_buffer(&device, &simulation_buffer_data, Some(&format!("Simulation buffer {i}")))
+    })
+    .collect::<Vec<_>>()
 }
 
 fn display_fps(diagnostics: Res<Diagnostics>, mut windows: Query<&mut Window, With<PrimaryWindow>>) {

@@ -1414,6 +1414,7 @@ dependencies = [
  "bytemuck",
  "embed-resource",
  "image",
+ "parking_lot",
  "rand",
  "winit",
 ]

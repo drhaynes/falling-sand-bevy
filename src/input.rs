@@ -1,3 +1,4 @@
+use std::sync::{Arc};
 use bevy::app::{App, Plugin};
 use bevy::input::ButtonState;
 use bevy::input::mouse::MouseButtonInput;
@@ -20,6 +21,7 @@ pub struct DrawingParams {
     pub canvas_position: Vec2,
     pub is_drawing: bool,
     pub previous_canvas_position: Vec2,
+    pub frame_number: Arc<parking_lot::Mutex<usize>>,
 }
 
 pub fn update_input_state(
