@@ -58,7 +58,7 @@ impl FromWorld for ColourPipeline {
                             },
                             has_dynamic_offset: false,
                             min_binding_size: BufferSize::new(
-                                (2 * NUMBER_OF_CELLS * std::mem::size_of::<u32>()) as _,
+                                (NUMBER_OF_CELLS * std::mem::size_of::<u32>()) as _,
                             ),
                         },
                         count: None,
