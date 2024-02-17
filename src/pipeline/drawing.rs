@@ -109,6 +109,12 @@ pub fn queue_drawing_bind_group(
     buffers: Res<CellularAutomataBuffers>,
     parameters: Res<DrawingParams>,
 ) {
+    // Ping-pong the buffers, alternating source and destination each frame
+    let destination_buffer = if *parameters.frame_number.lock() % 2 == 0 {
+        &buffers.simulation_buffers[1]
+    } else {
+        &buffers.simulation_buffers[0]
+    };
     let drawing_bind_group = render_device.create_bind_group(&BindGroupDescriptor {
         label: Some("Drawing bind group"),
         layout: &pipeline.drawing_bind_group_layout,
@@ -119,7 +125,7 @@ pub fn queue_drawing_bind_group(
             },
             BindGroupEntry {
                 binding: 1,
-                resource: buffers.simulation_buffers[*parameters.frame_number.lock() % 2].as_entire_binding(),
+                resource: destination_buffer.as_entire_binding(),
             },
         ],
     });

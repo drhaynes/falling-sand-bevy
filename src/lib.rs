@@ -109,7 +109,7 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>, device: Res<
 }
 
 fn create_simulation_buffers(device: Res<RenderDevice>) -> Vec<Buffer> {
-    let simulation_buffer_data = vec![0u32; NUMBER_OF_CELLS];
+    let simulation_buffer_data = vec![0u32; 2 * NUMBER_OF_CELLS];
     (0..2).map(|i| {
         buffer::create_storage_buffer(&device, &simulation_buffer_data, Some(&format!("Simulation buffer {i}")))
     })

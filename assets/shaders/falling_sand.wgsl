@@ -19,7 +19,7 @@ fn init(@builtin(global_invocation_id) invocation_id: vec3<u32>, @builtin(num_wo
         particle_type = STONE;
     }
 
-    simulation_source[index_of(location, size.x)] = Cell(particle_type);
+    simulation_destination[index_of(location, size.x)] = Cell(particle_type);
     let colour = colour_for_particle_type(particle_type);
     textureStore(texture, location, colour);
 }
@@ -34,7 +34,9 @@ fn update(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
     let current_cell = get_cell(location);
 
     if (current_cell.particle_type == AIR) {
-        // do nothing
+        //simulation_destination[index_of(location, size.x)] = Cell(AIR);
+        let air_colour = colour_for_particle_type(AIR);
+        textureStore(texture, location, air_colour);
     } else if (current_cell.particle_type == SAND) {
         // check below and fall if we can
         let cell_below = get_cell(location + vec2<i32>(0, 1));
@@ -44,10 +46,12 @@ fn update(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
             let air_colour = colour_for_particle_type(AIR);
             textureStore(texture, location, air_colour);
 
-            simulation_source[index_of(location + vec2<i32>(0, 1), size.x)] = Cell(SAND);
+            let location_down = location + vec2<i32>(0, 1);
+            simulation_destination[index_of(location_down, size.x)] = Cell(SAND);
             let sand_colour = colour_for_particle_type(SAND);
-            textureStore(texture, location + vec2<i32>(0, 1), sand_colour);
-        } else {
+            textureStore(texture, location_down, sand_colour);
+        }
+        else {
             // there is something directly below
             // select a random direction diagonally down
             // and try to fall there
@@ -58,14 +62,23 @@ fn update(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
             }
             let cell_below_diagonally = get_cell(location + vec2<i32>(new_x, 1));
             if (cell_below_diagonally.particle_type == AIR) {
-                simulation_source[index_of(location, size.x)] = Cell(AIR);
+                simulation_destination[index_of(location, size.x)] = Cell(AIR);
                 let air_colour = colour_for_particle_type(AIR);
                 textureStore(texture, location, air_colour);
 
-            simulation_source[index_of(location + vec2<i32>(new_x, 1), size.x)] = Cell(SAND);
-            let sand_colour = colour_for_particle_type(SAND);
+                simulation_destination[index_of(location + vec2<i32>(new_x, 1), size.x)] = Cell(SAND);
+                let sand_colour = colour_for_particle_type(SAND);
                 textureStore(texture, location + vec2<i32>(new_x, 1), sand_colour);
+            } else {
+                // anything other than air, don't fall, stay in place
+                simulation_destination[index_of(location, size.x)] = Cell(SAND);
+                let sand_colour = colour_for_particle_type(SAND);
+                textureStore(texture, location, sand_colour);
             }
         }
+    } else if (current_cell.particle_type == STONE) {
+        simulation_destination[index_of(location, size.x)] = Cell(STONE);
+        let stone_colour = colour_for_particle_type(STONE);
+        textureStore(texture, location, stone_colour);
     }
 }
