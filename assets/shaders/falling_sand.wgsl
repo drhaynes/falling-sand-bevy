@@ -13,7 +13,7 @@ fn init(@builtin(global_invocation_id) invocation_id: vec3<u32>, @builtin(num_wo
     var particle_type = AIR;
 
     // Add a stone barrier at the bottom of the screen
-    if(location.y > 640) {
+    if(location.y < 100) {
         particle_type = STONE;
     }
 
@@ -31,7 +31,7 @@ fn update(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
 
     if (current_cell.particle_type == SAND) {
         // check below and fall if we can
-        let location_down = location + vec2<i32>(0, 1);
+        let location_down = location + vec2<i32>(0, -1);
         let cell_below = get_cell(location_down);
 
         if (cell_below.particle_type == AIR) {
@@ -48,13 +48,20 @@ fn update(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
             if (rand > 0.5) {
                 new_x = 1;
             }
-            let cell_below_diagonally = get_cell(location + vec2<i32>(new_x, 1));
+            let cell_below_diagonally = get_cell(location + vec2<i32>(new_x, -1));
             if (cell_below_diagonally.particle_type == AIR) {
                 simulation_destination[index_of(location, size.x)] = Cell(AIR);
-                simulation_destination[index_of(location + vec2<i32>(new_x, 1), size.x)] = Cell(SAND);
+                simulation_destination[index_of(location + vec2<i32>(new_x, -1), size.x)] = Cell(SAND);
             } else {
-                // anything other than air, don't fall, stay in place
-                simulation_destination[index_of(location, size.x)] = Cell(SAND);
+                // can't go that way, try to go the other way
+                let cell_below_other_way = get_cell(location + vec2<i32>(-new_x, -1));
+                if (cell_below_other_way.particle_type == AIR) {
+                simulation_destination[index_of(location, size.x)] = Cell(AIR);
+                simulation_destination[index_of(location + vec2<i32>(-new_x, -1), size.x)] = Cell(SAND);
+                } else {
+                    // anything other than air, don't fall, stay in place
+                    simulation_destination[index_of(location, size.x)] = Cell(SAND);
+                }
             }
         }
     } else {
