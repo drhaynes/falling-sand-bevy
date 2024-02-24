@@ -111,9 +111,9 @@ pub fn queue_drawing_bind_group(
 ) {
     // Ping-pong the buffers, alternating source and destination each frame
     let destination_buffer = if *parameters.frame_number.lock() % 2 == 0 {
-        &buffers.simulation_buffers[0]
-    } else {
         &buffers.simulation_buffers[1]
+    } else {
+        &buffers.simulation_buffers[0]
     };
     let drawing_bind_group = render_device.create_bind_group(&BindGroupDescriptor {
         label: Some("Drawing bind group"),

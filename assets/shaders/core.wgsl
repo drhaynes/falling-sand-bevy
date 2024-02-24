@@ -50,7 +50,7 @@ fn randomFloat(value: u32) -> f32 {
     return f32(hash(value)) / 4294967295.0;
 }
 
-// Returns the index in 1D buffer of given width of the given 2D location.
+// Returns the index in 1D buffer of the given 2D location, of given width.
 fn index_of(location: vec2<i32>, width: u32) -> i32 {
-    return (location.y * i32(width)) + location.x;
+    return location.y * i32(width) + location.x;
 }
