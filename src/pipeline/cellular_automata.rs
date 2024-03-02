@@ -4,7 +4,7 @@ use bevy::asset::AssetServer;
 use bevy::prelude::{Commands, FromWorld, Image, IntoSystemConfigs, Res, Resource, World};
 use bevy::render::render_asset::RenderAssets;
 use bevy::render::{render_graph, RenderSet};
-use bevy::render::render_graph::{NodeRunError, RenderGraphContext, SlotInfo};
+use bevy::render::render_graph::{NodeRunError, RenderGraphContext, SlotInfo, RenderLabel};
 use bevy::render::render_resource::*;
 use bevy::render::renderer::{RenderContext, RenderDevice};
 use bevy::render::RenderSet::Render;
@@ -31,9 +31,9 @@ pub struct CellularAutomataPipeline {
 impl FromWorld for CellularAutomataPipeline {
     fn from_world(world: &mut World) -> Self {
         let bind_group_layout = world.resource::<RenderDevice>()
-            .create_bind_group_layout(&BindGroupLayoutDescriptor{
-                label: Some("Cellular automata bind group layout"),
-                entries: &[
+            .create_bind_group_layout(
+                "Cellular automata bind group layout",
+                &[
                     BindGroupLayoutEntry {
                         binding: 0,
                         visibility: ShaderStages::COMPUTE,
@@ -75,7 +75,7 @@ impl FromWorld for CellularAutomataPipeline {
                         count: None,
                     }
                 ],
-            });
+            );
 
         let pipeline_cache = world.resource::<PipelineCache>();
         let shader = world
@@ -133,10 +133,10 @@ pub fn queue_bind_group(
         (&buffers.simulation_buffers[1], &buffers.simulation_buffers[0])
     };
 
-    let bind_group = render_device.create_bind_group(&BindGroupDescriptor {
-        label: Some("Cellular Automata Bind Group"),
-        layout: &pipeline.bind_group_layout,
-        entries: &[
+    let bind_group = render_device.create_bind_group(
+        "Cellular Automata Bind Group",
+        &pipeline.bind_group_layout,
+        &[
             BindGroupEntry {
                 binding: 0,
                 resource: buffers.size_buffer.as_entire_binding(),
@@ -153,7 +153,7 @@ pub fn queue_bind_group(
                 binding: 3,
                 resource: BindingResource::TextureView(&view.texture_view),
         }],
-    });
+    );
     commands.insert_resource(CellularAutomataImageBindGroup(bind_group))
 }
 
@@ -162,6 +162,9 @@ pub enum CellularAutomataState {
     Init,
     Update,
 }
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
+pub struct CellularAutomataLabel;
 
 pub struct CellularAutomataNode {
     state: CellularAutomataState,

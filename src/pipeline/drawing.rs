@@ -7,7 +7,7 @@ use bevy::render::render_phase::Draw;
 use bevy::render::render_resource::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BufferBindingType, BufferSize, CachedComputePipelineId, CachedPipelineState, ComputePassDescriptor, ComputePipelineDescriptor, PipelineCache, PushConstantRange, ShaderStages, StorageTextureAccess, TextureFormat, TextureViewDimension};
 use bevy::render::renderer::{RenderContext, RenderDevice};
 use bevy::render::{render_graph, RenderSet};
-use bevy::render::render_graph::{NodeRunError, RenderGraphContext};
+use bevy::render::render_graph::{NodeRunError, RenderGraphContext, RenderLabel};
 use bevy::render::RenderSet::Render;
 use crate::cellular_automata_image::CellularAutomataImage;
 use crate::input::DrawingParams;
@@ -53,9 +53,9 @@ impl FromWorld for DrawingPipeline {
         
         let drawing_bind_group_layout = world
             .resource::<RenderDevice>()
-            .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Drawing bind group layout"),
-                entries: &[
+            .create_bind_group_layout(
+                "Drawing bind group layout",
+                &[
                     BindGroupLayoutEntry {
                         binding: 0,
                         visibility: ShaderStages::COMPUTE,
@@ -77,7 +77,7 @@ impl FromWorld for DrawingPipeline {
                         count: None,
                     },
                 ],
-            });
+            );
         
         let drawing_shader = world.resource::<AssetServer>().load("shaders/drawing.wgsl");
         
@@ -116,10 +116,10 @@ pub fn queue_drawing_bind_group(
     } else {
         &buffers.simulation_buffers[0]
     };
-    let drawing_bind_group = render_device.create_bind_group(&BindGroupDescriptor {
-        label: Some("Drawing bind group"),
-        layout: &pipeline.drawing_bind_group_layout,
-        entries: &[
+    let drawing_bind_group = render_device.create_bind_group(
+        "Drawing bind group",
+        &pipeline.drawing_bind_group_layout,
+        &[
             BindGroupEntry {
                 binding: 0,
                 resource: buffers.size_buffer.as_entire_binding(),
@@ -129,9 +129,12 @@ pub fn queue_drawing_bind_group(
                 resource: destination_buffer.as_entire_binding(),
             },
         ],
-    });
+    );
     commands.insert_resource(DrawingBindGroup(drawing_bind_group))
 }
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
+pub struct DrawingLabel;
 
 pub enum DrawingState {
     Loading,

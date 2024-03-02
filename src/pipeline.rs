@@ -1,7 +1,11 @@
 use bevy::app::App;
+use bevy::core_pipeline::core_3d::graph::Core3d;
 use bevy::prelude::Plugin;
-use bevy::render::render_graph::RenderGraph;
+use bevy::render::render_graph::RenderGraphApp;
 use bevy::render::RenderApp;
+use crate::pipeline::cellular_automata::CellularAutomataLabel;
+use crate::pipeline::colour::ColourLabel;
+use crate::pipeline::drawing::DrawingLabel;
 
 pub mod cellular_automata;
 pub mod drawing;
@@ -12,19 +16,17 @@ impl Plugin for PipelinesPlugin {
     fn build(&self, app: &mut App) {
         let render_app = app.sub_app_mut(RenderApp);
         render_app
-            .add_plugin(drawing::DrawingPipelinePlugin)
-            .add_plugin(cellular_automata::CellularAutomataPipelinePlugin)
-            .add_plugin(colour::ColourPipelinePlugin);
+            .add_plugins((
+                drawing::DrawingPipelinePlugin,
+                cellular_automata::CellularAutomataPipelinePlugin,
+                colour::ColourPipelinePlugin));
 
-        let mut render_graph = render_app.world.resource_mut::<RenderGraph>();
-
-        let automata_id = render_graph.add_node("falling_sand", cellular_automata::CellularAutomataNode::default());
-        let drawing_id = render_graph.add_node("drawing", drawing::DrawingNode::default());
-        let colour_id = render_graph.add_node("colour", colour::ColourNode::default());
+        render_app
+            .add_render_graph_node::<cellular_automata::CellularAutomataNode>(Core3d, CellularAutomataLabel)
+            .add_render_graph_node::<drawing::DrawingNode>(Core3d, DrawingLabel)
+            .add_render_graph_node::<colour::ColourNode>(Core3d, ColourLabel);
 
         // User Drawing Input -> Cellular Automata Simulation -> Cell Rendering (i.e. colour output) -> Camera
-        render_graph.add_node_edge(drawing_id, automata_id);
-        render_graph.add_node_edge(automata_id, colour_id);
-        render_graph.add_node_edge(colour_id, bevy::render::main_graph::node::CAMERA_DRIVER);
+        render_app.add_render_graph_edges(Core3d, (DrawingLabel, CellularAutomataLabel, ColourLabel, bevy::render::graph::CameraDriverLabel));
     }
 }

@@ -7,7 +7,7 @@ use bevy::render::render_resource::{BindGroup, BindGroupDescriptor, BindGroupEnt
 use bevy::render::{render_graph, RenderSet};
 use bevy::ecs::system::Resource;
 use bevy::render::render_asset::RenderAssets;
-use bevy::render::render_graph::{NodeRunError, RenderGraphContext};
+use bevy::render::render_graph::{NodeRunError, RenderGraphContext, RenderLabel};
 use bevy::render::renderer::{RenderContext, RenderDevice};
 use bevy::render::RenderSet::Render;
 use crate::cellular_automata_image::CellularAutomataImage;
@@ -37,9 +37,9 @@ impl FromWorld for ColourPipeline {
         let colour_bind_group_layout =
         world
             .resource::<RenderDevice>()
-            .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Falling sand colour bind group layout"),
-                entries: &[
+            .create_bind_group_layout(
+                "Falling sand colour bind group layout",
+                &[
                     BindGroupLayoutEntry {
                         binding: 0,
                         visibility: ShaderStages::COMPUTE,
@@ -75,7 +75,7 @@ impl FromWorld for ColourPipeline {
                         count: None,
                     },
                 ],
-            });
+            );
 
         let colour_shader = world.resource::<AssetServer>().load("shaders/colour.wgsl");
 
@@ -108,10 +108,10 @@ pub fn queue_colour_bind_group(
     params: Res<DrawingParams>,
 ) {
     let view = &gpu_images[&cellular_automata_image.0];
-    let colour_bind_group = render_device.create_bind_group(&BindGroupDescriptor {
-        label: Some("Falling sand colour bind group"),
-        layout: &pipeline.colour_bind_group_layout,
-        entries: &[
+    let colour_bind_group = render_device.create_bind_group(
+        "Falling sand colour bind group",
+        &pipeline.colour_bind_group_layout,
+        &[
             BindGroupEntry {
                 binding: 0,
                 resource: buffers.size_buffer.as_entire_binding(),
@@ -125,9 +125,12 @@ pub fn queue_colour_bind_group(
                 resource: BindingResource::TextureView(&view.texture_view),
             },
         ],
-    });
+    );
     commands.insert_resource(ColourBindGroup(colour_bind_group));
 }
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
+pub struct ColourLabel;
 
 pub enum ColourState {
     Loading,
