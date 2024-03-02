@@ -1,18 +1,17 @@
 use std::sync::{Arc};
-use bevy::app::{App, Plugin};
+use bevy::app::{App, Plugin, Update};
 use bevy::input::ButtonState;
 use bevy::input::mouse::MouseButtonInput;
 use bevy::math::Vec2;
 use bevy::prelude::{Camera, EventReader, GlobalTransform, MouseButton, Query, ResMut, Resource, With};
 use bevy::render::extract_resource::ExtractResource;
 use bevy::window::{PrimaryWindow, Window};
-use winit::event::Event;
 
 pub struct InputPlugin;
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<DrawingParams>()
-            .add_system(update_input_state);
+            .add_systems(Update, update_input_state);
     }
 }
 
@@ -33,7 +32,7 @@ pub fn update_input_state(
     let primary_window = window_query.single();
     let (camera, camera_transform) = camera_query.single();
 
-    for event in mouse_button_input_events.iter() {
+    for event in mouse_button_input_events.read() {
         if event.button == MouseButton::Left {
             let is_drawing = event.state == ButtonState::Pressed;
             input_state.is_drawing = is_drawing;

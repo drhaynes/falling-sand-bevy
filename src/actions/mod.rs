@@ -12,7 +12,7 @@ pub struct ActionsPlugin;
 impl Plugin for ActionsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Actions>()
-            .add_system(set_movement_actions.in_set(OnUpdate(GameState::Playing)));
+            .add_systems(Update, set_movement_actions.run_if(in_state(GameState::Playing)));
     }
 }
 
@@ -21,7 +21,7 @@ pub struct Actions {
     pub player_movement: Option<Vec2>,
 }
 
-pub fn set_movement_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<KeyCode>>) {
+pub fn set_movement_actions(mut actions: ResMut<Actions>, keyboard_input: Res<ButtonInput<KeyCode>>) {
     let player_movement = Vec2::new(
         get_movement(GameControl::Right, &keyboard_input)
             - get_movement(GameControl::Left, &keyboard_input),

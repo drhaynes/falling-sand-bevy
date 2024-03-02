@@ -8,14 +8,11 @@ mod camera;
 mod input;
 mod buffer;
 
-use bevy::app::App;
 #[cfg(debug_assertions)]
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
-use bevy::diagnostic::Diagnostics;
+use bevy::diagnostic::{DiagnosticsStore};
 use bevy::prelude::*;
 use bevy::render::extract_resource::{ExtractResource, ExtractResourcePlugin};
-use bevy::render::{RenderApp, RenderSet};
-use bevy::render::render_graph::RenderGraph;
 use bevy::render::render_resource::Buffer;
 use bevy::render::renderer::RenderDevice;
 use bevy::window::PrimaryWindow;
@@ -59,24 +56,26 @@ pub struct CellularAutomataBuffers {
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_state::<GameState>()
-            .add_startup_system(setup)
-            .add_plugin(LoadingPlugin)
-            .add_plugin(MenuPlugin)
-            .add_plugin(ActionsPlugin)
-            .add_plugin(InternalAudioPlugin)
-            .add_plugin(ExtractResourcePlugin::<CellularAutomataImage>::default())
-            .add_plugin(ExtractResourcePlugin::<DrawingParams>::default())
-            .add_plugin(ExtractResourcePlugin::<CellularAutomataBuffers>::default())
-            .add_plugin(camera::CameraPlugin)
-            .add_plugin(PipelinesPlugin)
-            .add_plugin(input::InputPlugin);
+        app.init_state::<GameState>()
+            .add_systems(Startup,setup)
+            .add_plugins((
+                LoadingPlugin,
+                MenuPlugin,
+                ActionsPlugin,
+                InternalAudioPlugin,
+                ExtractResourcePlugin::<CellularAutomataImage>::default(),
+                ExtractResourcePlugin::<DrawingParams>::default(),
+                ExtractResourcePlugin::<CellularAutomataBuffers>::default(),
+                camera::CameraPlugin,
+                PipelinesPlugin,
+                input::InputPlugin));
 
         #[cfg(debug_assertions)]
         {
-            app.add_plugin(FrameTimeDiagnosticsPlugin::default())
-                .add_plugin(LogDiagnosticsPlugin::default())
-                .add_system(display_fps);
+            app.add_systems(Startup, display_fps)
+                .add_plugins((
+                    FrameTimeDiagnosticsPlugin::default(),
+                    LogDiagnosticsPlugin::default()));
         }
     }
 }
@@ -116,9 +115,10 @@ fn create_simulation_buffers(device: Res<RenderDevice>) -> Vec<Buffer> {
     .collect::<Vec<_>>()
 }
 
-fn display_fps(diagnostics: Res<Diagnostics>, mut windows: Query<&mut Window, With<PrimaryWindow>>) {
+fn display_fps(diagnostics: Res<DiagnosticsStore>, mut windows: Query<&mut Window, With<PrimaryWindow>>) {
     if let Ok(mut window) = windows.get_single_mut() {
-        if let Some(fps_raw) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
+
+        if let Some(fps_raw) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
             if let Some(fps_smoothed) = fps_raw.smoothed() {
                 window.title = format!("Falling Sand Game ({fps_smoothed:.2} fps)")
             }

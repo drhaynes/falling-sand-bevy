@@ -2,13 +2,14 @@ use std::borrow::Cow;
 use std::cell::Cell;
 use bevy::app::App;
 use bevy::asset::AssetServer;
-use bevy::prelude::{Commands, FromWorld, Image, IntoSystemConfig, Plugin, Res, World};
+use bevy::prelude::{Commands, FromWorld, Image, IntoSystemConfigs, Plugin, Res, World};
 use bevy::render::render_resource::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BufferBindingType, BufferSize, CachedComputePipelineId, CachedPipelineState, ComputePassDescriptor, ComputePipelineDescriptor, PipelineCache, ShaderStages, StorageTextureAccess, TextureFormat, TextureViewDimension};
 use bevy::render::{render_graph, RenderSet};
 use bevy::ecs::system::Resource;
 use bevy::render::render_asset::RenderAssets;
 use bevy::render::render_graph::{NodeRunError, RenderGraphContext};
 use bevy::render::renderer::{RenderContext, RenderDevice};
+use bevy::render::RenderSet::Render;
 use crate::cellular_automata_image::CellularAutomataImage;
 use crate::{CellularAutomataBuffers, NUMBER_OF_CELLS, SIMULATION_SIZE, WORKGROUP_SIZE};
 use crate::input::DrawingParams;
@@ -19,7 +20,7 @@ impl Plugin for ColourPipelinePlugin {
     fn build(&self, app: &mut App) {
         app
             .init_resource::<ColourPipeline>()
-            .add_system(queue_colour_bind_group.in_set(RenderSet::Queue));
+            .add_systems(Render, queue_colour_bind_group.in_set(RenderSet::Queue));
     }
 }
 

@@ -11,22 +11,15 @@ pub struct LoadingPlugin;
 impl Plugin for LoadingPlugin {
     fn build(&self, app: &mut App) {
         app.add_loading_state(
-            LoadingState::new(GameState::Loading).continue_to_state(GameState::Playing),
-        )
-        .add_collection_to_loading_state::<_, FontAssets>(GameState::Loading)
-        .add_collection_to_loading_state::<_, AudioAssets>(GameState::Loading)
-        .add_collection_to_loading_state::<_, TextureAssets>(GameState::Loading);
+            LoadingState::new(GameState::Loading).continue_to_state(GameState::Playing)
+                .load_collection::<AudioAssets>()
+                .load_collection::<TextureAssets>(),
+        );
     }
 }
 
 // the following asset collections will be loaded during the State `GameState::Loading`
 // when done loading, they will be inserted as resources (see <https://github.com/NiklasEi/bevy_asset_loader>)
-
-#[derive(AssetCollection, Resource)]
-pub struct FontAssets {
-    #[asset(path = "fonts/FiraSans-Bold.ttf")]
-    pub fira_sans: Handle<Font>,
-}
 
 #[derive(AssetCollection, Resource)]
 pub struct AudioAssets {
@@ -37,5 +30,5 @@ pub struct AudioAssets {
 #[derive(AssetCollection, Resource)]
 pub struct TextureAssets {
     #[asset(path = "textures/bevy.png")]
-    pub texture_bevy: Handle<Image>,
+    pub bevy: Handle<Image>,
 }

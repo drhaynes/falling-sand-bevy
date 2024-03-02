@@ -1,13 +1,14 @@
 use std::borrow::Cow;
 use bevy::app::{App, Plugin};
 use bevy::math::Vec2;
-use bevy::prelude::{AssetServer, Commands, FromWorld, Image, IntoSystemConfig, Res, Resource, World};
+use bevy::prelude::{AssetServer, Commands, FromWorld, Image, IntoSystemConfigs, Res, Resource, World};
 use bevy::render::render_asset::RenderAssets;
 use bevy::render::render_phase::Draw;
 use bevy::render::render_resource::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BufferBindingType, BufferSize, CachedComputePipelineId, CachedPipelineState, ComputePassDescriptor, ComputePipelineDescriptor, PipelineCache, PushConstantRange, ShaderStages, StorageTextureAccess, TextureFormat, TextureViewDimension};
 use bevy::render::renderer::{RenderContext, RenderDevice};
 use bevy::render::{render_graph, RenderSet};
 use bevy::render::render_graph::{NodeRunError, RenderGraphContext};
+use bevy::render::RenderSet::Render;
 use crate::cellular_automata_image::CellularAutomataImage;
 use crate::input::DrawingParams;
 use crate::{CellularAutomataBuffers, NUMBER_OF_CELLS, SIMULATION_SIZE, WORKGROUP_SIZE};
@@ -18,7 +19,7 @@ impl Plugin for DrawingPipelinePlugin {
     fn build(&self, render_app: &mut App) {
         render_app
             .init_resource::<DrawingPipeline>()
-            .add_system(queue_drawing_bind_group.in_set(RenderSet::Queue));
+            .add_systems(Render, queue_drawing_bind_group.in_set(RenderSet::Queue));
     }
 }
 
